@@ -1,13 +1,15 @@
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DEFAULT_MAP_CENTER } from '../constants';
+import MapMarker from './MapMarker';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function Map() {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
+    const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
 
     useEffect(() => {
         if (!mapContainer.current) return;
@@ -22,12 +24,17 @@ export default function Map() {
 
         map.current.addControl(new mapboxgl.NavigationControl());
 
+        map.current.on('load', () => {
+            setMapInstance(map.current)
+        })
+
         map.current.on('error', (e) => {
             console.error('Mapbox error:', e);
         });
 
         return () => {
             map.current?.remove();
+            setMapInstance(null);
         }
     }, []);
 
@@ -41,6 +48,14 @@ export default function Map() {
                 top: 0,
                 bottom: 0
             }}
-        />
+        >
+            {mapInstance && (
+                <MapMarker 
+                    map={mapInstance}
+                    coordinates={DEFAULT_MAP_CENTER}
+                    popupContent='Test Popup'
+                />
+            )}
+            </div>
     )
 }
